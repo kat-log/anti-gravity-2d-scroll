@@ -14,6 +14,9 @@ export default class StageSelectScene extends Phaser.Scene {
       fill: '#fff'
     }).setOrigin(0.5);
 
+    this.buttons = [];
+    this.currentSelection = 0;
+
     levels.forEach((level, index) => {
       const y = 250 + index * 100;
 
@@ -25,12 +28,57 @@ export default class StageSelectScene extends Phaser.Scene {
         fill: '#fff'
       }).setOrigin(0.5);
 
-      button.on('pointerover', () => button.setFillStyle(0x8888ff));
-      button.on('pointerout', () => button.setFillStyle(0x6666ff));
+      // Store button data for updates
+      button.setData('index', index);
+      this.buttons.push(button);
+
+      // Mouse interactions
+      button.on('pointerover', () => {
+        this.currentSelection = index;
+        this.updateSelection();
+      });
 
       button.on('pointerdown', () => {
         this.scene.start('GameScene', { levelIndex: index });
       });
     });
+
+    // Keyboard Input
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.enterKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
+
+    this.input.keyboard.on('keydown-UP', () => {
+      this.currentSelection--;
+      if (this.currentSelection < 0) this.currentSelection = levels.length - 1;
+      this.updateSelection();
+    });
+
+    this.input.keyboard.on('keydown-DOWN', () => {
+      this.currentSelection++;
+      if (this.currentSelection >= levels.length) this.currentSelection = 0;
+      this.updateSelection();
+    });
+
+    this.input.keyboard.on('keydown-SPACE', () => this.confirmSelection());
+    this.input.keyboard.on('keydown-ENTER', () => this.confirmSelection());
+
+    // Initial highlight
+    this.updateSelection();
+  }
+
+  updateSelection() {
+    this.buttons.forEach((button, index) => {
+      if (index === this.currentSelection) {
+        button.setFillStyle(0x8888ff); // Highlight
+        button.setScale(1.05);
+      } else {
+        button.setFillStyle(0x6666ff); // Normal
+        button.setScale(1);
+      }
+    });
+  }
+
+  confirmSelection() {
+    this.scene.start('GameScene', { levelIndex: this.currentSelection });
   }
 }
