@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import StageSelectScene from './scenes/StageSelectScene';
 import GameScene from './scenes/GameScene';
 import './style.css';
 
@@ -10,10 +11,10 @@ const config = {
     default: 'arcade',
     arcade: {
       gravity: { y: 0 }, // We apply gravity per object or globally here
-      debug: true
+      debug: false
     }
   },
-  scene: [GameScene]
+  scene: [StageSelectScene, GameScene]
 };
 
 const game = new Phaser.Game(config);

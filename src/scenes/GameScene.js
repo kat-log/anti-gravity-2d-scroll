@@ -1,6 +1,6 @@
-
 import Phaser from 'phaser';
 import SoundManager from '../utils/SoundManager';
+import { levels } from '../levels';
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -8,6 +8,14 @@ export default class GameScene extends Phaser.Scene {
     this.score = 0;
     this.scoreText = null;
     this.soundManager = new SoundManager();
+    this.levelData = null;
+  }
+
+  init(data) {
+    // Load level data based on index passed from StageSelectScene
+    // Default to Level 1 (index 0) if no data passed
+    const index = data.levelIndex !== undefined ? data.levelIndex : 0;
+    this.levelData = levels[index];
   }
 
   preload() {
@@ -23,44 +31,39 @@ export default class GameScene extends Phaser.Scene {
     this.input.on('pointerdown', () => this.soundManager.init());
     this.input.keyboard.on('keydown', () => this.soundManager.init());
 
+    if (!this.levelData) return;
+
     // --- World & Camera Setup ---
-    this.physics.world.setBounds(0, 0, 2400, 600);
-    this.cameras.main.setBounds(0, 0, 2400, 600);
+    this.physics.world.setBounds(0, 0, this.levelData.width, this.levelData.height);
+    this.cameras.main.setBounds(0, 0, this.levelData.width, this.levelData.height);
 
     // --- Level Setup ---
     // Ground
     // Use tileSprite for repeating ground texture across the whole world
-    const ground = this.add.tileSprite(1200, 580, 2400, 40, 'ground'); // Center x=1200, width=2400
+    const ground = this.add.tileSprite(
+      this.levelData.width / 2,
+      580,
+      this.levelData.width,
+      40,
+      'ground'
+    );
     this.physics.add.existing(ground, true);
 
     // Platforms
     this.platforms = this.physics.add.staticGroup();
 
-    // Extended Platform Positions
-    const platformData = [
-      // Screen 1 (0-800)
-      { x: 600, y: 450, w: 200, h: 20 },
-      { x: 200, y: 350, w: 200, h: 20 },
-
-      // Screen 2 (800-1600)
-      { x: 1000, y: 300, w: 200, h: 20 },
-      { x: 1400, y: 400, w: 200, h: 20 },
-      { x: 1200, y: 150, w: 150, h: 20 }, // High platform
-
-      // Screen 3 (1600-2400)
-      { x: 1800, y: 350, w: 200, h: 20 },
-      { x: 2100, y: 250, w: 200, h: 20 },
-      { x: 1700, y: 500, w: 100, h: 20 }  // Low platform
-    ];
-
-    platformData.forEach(p => {
+    this.levelData.platforms.forEach(p => {
       const platform = this.add.tileSprite(p.x, p.y, p.w, p.h, 'ground');
       this.physics.add.existing(platform, true);
       this.platforms.add(platform);
     });
 
     // --- Player ---
-    this.player = this.physics.add.sprite(100, 450, 'player');
+    this.player = this.physics.add.sprite(
+      this.levelData.playerStart.x,
+      this.levelData.playerStart.y,
+      'player'
+    );
     this.player.setCollideWorldBounds(true);
     this.player.setGravityY(800);
 
@@ -80,17 +83,7 @@ export default class GameScene extends Phaser.Scene {
       repeat: 0
     });
 
-    const starPositions = [
-      { x: 600, y: 400 },
-      { x: 200, y: 300 },
-      { x: 1000, y: 250 },
-      { x: 1200, y: 100 },
-      { x: 1400, y: 350 },
-      { x: 1800, y: 300 },
-      { x: 2100, y: 200 }
-    ];
-
-    starPositions.forEach(pos => {
+    this.levelData.stars.forEach(pos => {
       const star = this.physics.add.sprite(pos.x, pos.y, 'star');
       star.body.setAllowGravity(false);
       this.stars.add(star);
@@ -101,14 +94,7 @@ export default class GameScene extends Phaser.Scene {
     // --- Enemies ---
     this.enemies = this.physics.add.group();
 
-    const enemyPositions = [
-        { x: 400, y: 100 },
-        { x: 1100, y: 100 },
-        { x: 1500, y: 100 },
-        { x: 1900, y: 100 }
-    ];
-
-    enemyPositions.forEach(pos => {
+    this.levelData.enemies.forEach(pos => {
         const enemy = this.physics.add.sprite(pos.x, pos.y, 'enemy');
         enemy.setCollideWorldBounds(true);
         enemy.setGravityY(800);
@@ -125,7 +111,7 @@ export default class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
 
     // --- Goal ---
-    this.goal = this.physics.add.sprite(2300, 100, 'goal'); // Moved to end
+    this.goal = this.physics.add.sprite(this.levelData.goal.x, this.levelData.goal.y, 'goal');
     this.goal.body.setAllowGravity(false);
     this.goal.setImmovable(true);
     this.physics.add.overlap(this.player, this.goal, this.reachGoal, null, this);
@@ -137,6 +123,11 @@ export default class GameScene extends Phaser.Scene {
 
     this.statusText = this.add.text(400, 300, '', { fontSize: '48px', fill: '#fff' }).setOrigin(0.5);
     this.statusText.setScrollFactor(0); // Fix to screen
+
+    // Level Name Display
+    const levelText = this.add.text(400, 50, this.levelData.name, { fontSize: '24px', fill: '#fff' }).setOrigin(0.5);
+    levelText.setScrollFactor(0);
+    this.time.delayedCall(2000, () => levelText.destroy());
   }
 
   update() {
@@ -202,11 +193,11 @@ export default class GameScene extends Phaser.Scene {
 
   reachGoal(player, goal) {
     this.physics.pause();
-    this.statusText.setText('YOU WIN!\nPress SPACE to Restart');
+    this.statusText.setText('YOU WIN!\nPress SPACE for Menu');
     this.soundManager.playWin();
 
     this.input.keyboard.once('keydown-SPACE', () => {
-        this.scene.restart();
+        this.scene.start('StageSelectScene');
     });
   }
 }
