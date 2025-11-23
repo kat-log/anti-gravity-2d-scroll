@@ -17,10 +17,12 @@ export default class GameScene extends Phaser.Scene {
     // Default to Level 1 (index 0) if no data passed
     const index = data.levelIndex !== undefined ? data.levelIndex : 0;
     this.levelData = levels[index];
+    this.characterType = data.characterType || 'standard';
   }
 
   preload() {
     this.load.image('player', '/assets/player.svg');
+    this.load.image('player2', '/assets/player2.svg');
     this.load.image('ground', '/assets/ground.svg');
     this.load.image('enemy', '/assets/enemy.svg');
     this.load.image('bat', '/assets/bat.svg');
@@ -66,16 +68,37 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // --- Player ---
+    const playerKey = this.characterType === 'ninja' ? 'player2' : 'player';
     this.player = this.physics.add.sprite(
       this.levelData.playerStart.x,
       this.levelData.playerStart.y,
-      'player'
+      playerKey
     );
     this.player.setCollideWorldBounds(true);
     this.player.setGravityY(800);
 
     // Camera Follow
     this.cameras.main.startFollow(this.player, true, 0.05, 0.05);
+
+    // Jump Logic (Event-based for reliability)
+    this.jumpCount = 0;
+    this.input.keyboard.on('keydown-UP', () => {
+        if (!this.player) return;
+
+        const isNinja = this.characterType === 'ninja';
+        const jumpForce = isNinja ? -400 : -600;
+        const onGround = this.player.body.touching.down;
+
+        if (onGround) {
+            this.player.setVelocityY(jumpForce);
+            this.jumpCount = 1;
+            this.soundManager.playJump();
+        } else if (isNinja && this.jumpCount < 2) {
+            this.player.setVelocityY(jumpForce);
+            this.jumpCount++;
+            this.soundManager.playJump();
+        }
+    });
 
     this.cursors = this.input.keyboard.createCursorKeys();
 
@@ -169,10 +192,9 @@ export default class GameScene extends Phaser.Scene {
       this.player.setVelocityX(0);
     }
 
-    // Jump
-    if (this.cursors.up.isDown && this.player.body.touching.down) {
-      this.player.setVelocityY(jumpForce);
-      this.soundManager.playJump();
+    // Jump State Management
+    if (this.player.body.touching.down && this.player.body.velocity.y >= 0) {
+        this.jumpCount = 0;
     }
 
     // Enemy Logic: Patrol
