@@ -96,7 +96,13 @@ export default class StageSelectScene extends Phaser.Scene {
         this.add.text(rightX, 380, '▲ ▼ Change', { fontSize: '16px', fill: '#888' }).setOrigin(0.5) :
         this.add.text(rightX, 380, 'Clear Lv1-3 to Unlock', { fontSize: '16px', fill: '#555' }).setOrigin(0.5);
 
-    this.listCamera.ignore([this.charBox, this.charName, this.charIcon, charTitle, unlockText]);
+    this.charDesc = this.add.text(rightX, 430, '', {
+        fontSize: '16px',
+        fill: '#aaa',
+        align: 'center'
+    }).setOrigin(0.5);
+
+    this.listCamera.ignore([this.charBox, this.charName, this.charIcon, charTitle, unlockText, this.charDesc]);
 
     // --- Input Handling ---
     this.input.keyboard.on('keydown-UP', () => {
@@ -154,10 +160,12 @@ export default class StageSelectScene extends Phaser.Scene {
           this.charName.setText('NINJA');
           this.charName.setColor('#2ecc71');
           this.charIcon.setTexture('player2');
+          this.charDesc.setText('Low Jump Power\nDouble Jump Ability');
       } else {
           this.charName.setText('STANDARD');
           this.charName.setColor('#fff');
           this.charIcon.setTexture('player');
+          this.charDesc.setText('High Jump Power\nSimple & Reliable');
       }
   }
 
