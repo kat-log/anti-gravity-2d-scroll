@@ -22,6 +22,7 @@ export default class GameScene extends Phaser.Scene {
     this.load.image('player', '/assets/player.svg');
     this.load.image('ground', '/assets/ground.svg');
     this.load.image('enemy', '/assets/enemy.svg');
+    this.load.image('bat', '/assets/bat.svg');
     this.load.image('star', '/assets/star.svg');
     this.load.image('goal', '/assets/goal.svg');
   }
@@ -34,20 +35,25 @@ export default class GameScene extends Phaser.Scene {
     if (!this.levelData) return;
 
     // --- World & Camera Setup ---
+    // --- World & Camera Setup ---
     this.physics.world.setBounds(0, 0, this.levelData.width, this.levelData.height);
+    this.physics.world.setBoundsCollision(true, true, true, false); // Allow falling through bottom
     this.cameras.main.setBounds(0, 0, this.levelData.width, this.levelData.height);
 
     // --- Level Setup ---
     // Ground
     // Use tileSprite for repeating ground texture across the whole world
-    const ground = this.add.tileSprite(
-      this.levelData.width / 2,
-      580,
-      this.levelData.width,
-      40,
-      'ground'
-    );
-    this.physics.add.existing(ground, true);
+    let ground;
+    if (this.levelData.hasGround !== false) {
+        ground = this.add.tileSprite(
+          this.levelData.width / 2,
+          580,
+          this.levelData.width,
+          40,
+          'ground'
+        );
+        this.physics.add.existing(ground, true);
+    }
 
     // Platforms
     this.platforms = this.physics.add.staticGroup();
@@ -70,11 +76,6 @@ export default class GameScene extends Phaser.Scene {
     // Camera Follow
     this.cameras.main.startFollow(this.player, true, 0.05, 0.05);
 
-    // --- Collisions ---
-    this.physics.add.collider(this.player, ground);
-    this.physics.add.collider(this.player, this.platforms);
-
-    // --- Input ---
     this.cursors = this.input.keyboard.createCursorKeys();
 
     // --- Collectibles (Stars) ---
@@ -94,19 +95,34 @@ export default class GameScene extends Phaser.Scene {
     // --- Enemies ---
     this.enemies = this.physics.add.group();
 
-    this.levelData.enemies.forEach(pos => {
-        const enemy = this.physics.add.sprite(pos.x, pos.y, 'enemy');
+    this.levelData.enemies.forEach(enemyData => {
+        const type = enemyData.type || 'ground';
+        const key = type === 'flying' ? 'bat' : 'enemy';
+
+        const enemy = this.physics.add.sprite(enemyData.x, enemyData.y, key);
         enemy.setCollideWorldBounds(true);
-        enemy.setGravityY(800);
-        enemy.setVelocityX(150);
         enemy.setBounce(1, 0);
         enemy.setFriction(0, 0);
-        // Store initial X for simple patrol logic
-        enemy.setData('originX', pos.x);
+        enemy.setData('originX', enemyData.x);
+        enemy.setData('type', type);
+
+        if (type === 'flying') {
+            enemy.body.setAllowGravity(false); // No gravity for bats
+            enemy.setVelocityX(100);
+        } else {
+            enemy.setGravityY(800);
+            enemy.setVelocityX(150);
+        }
+
         this.enemies.add(enemy);
     });
 
-    this.physics.add.collider(this.enemies, ground);
+    // --- Collisions ---
+    this.physics.add.collider(this.player, this.platforms);
+    if (ground) {
+        this.physics.add.collider(this.player, ground);
+        this.physics.add.collider(this.enemies, ground);
+    }
     this.physics.add.collider(this.enemies, this.platforms);
     this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
 
@@ -153,23 +169,51 @@ export default class GameScene extends Phaser.Scene {
       this.soundManager.playJump();
     }
 
-    // Enemy Logic: Simple Patrol around origin
+    // Enemy Logic: Patrol
     this.enemies.getChildren().forEach(enemy => {
         const originX = enemy.getData('originX');
+        const type = enemy.getData('type');
         const range = 200; // Patrol range
 
-        if (enemy.x > originX + range) {
-            enemy.setVelocityX(-150);
-        } else if (enemy.x < originX - range) {
-            enemy.setVelocityX(150);
+        if (type === 'flying') {
+            // Flying enemies just move back and forth
+            if (enemy.x > originX + range) {
+                enemy.setVelocityX(-100);
+                enemy.setFlipX(false);
+            } else if (enemy.x < originX - range) {
+                enemy.setVelocityX(100);
+                enemy.setFlipX(true);
+            }
+
+            // Kickstart if stopped
+            if (enemy.body.velocity.x === 0) {
+                 enemy.setVelocityX(100);
+            }
+        } else {
+            // Ground enemies
+            if (enemy.x > originX + range) {
+                enemy.setVelocityX(-150);
+            } else if (enemy.x < originX - range) {
+                enemy.setVelocityX(150);
+            }
+
+            // Failsafe for ground enemies
+            if (Math.abs(enemy.body.velocity.x) < 10) {
+                const direction = Math.random() > 0.5 ? 1 : -1;
+                enemy.setVelocityX(150 * direction);
+            }
         }
 
-        // Failsafe
-        if (Math.abs(enemy.body.velocity.x) < 10) {
-            const direction = Math.random() > 0.5 ? 1 : -1;
-            enemy.setVelocityX(150 * direction);
+        // Despawn if fell out of world (pits)
+        if (enemy.y > 600) {
+            enemy.destroy();
         }
     });
+
+    // Player fell in pit
+    if (this.player.y > 600) {
+        this.hitEnemy(this.player, null); // Trigger game over
+    }
   }
 
   collectStar(player, star) {

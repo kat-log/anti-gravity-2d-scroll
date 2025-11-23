@@ -12,7 +12,7 @@ export default class StageSelectScene extends Phaser.Scene {
     this.add.text(width / 2, 100, 'SELECT STAGE', {
       fontSize: '48px',
       fill: '#fff'
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setScrollFactor(0);
 
     this.buttons = [];
     this.currentSelection = 0;
@@ -62,6 +62,12 @@ export default class StageSelectScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-SPACE', () => this.confirmSelection());
     this.input.keyboard.on('keydown-ENTER', () => this.confirmSelection());
 
+    // Mouse Wheel
+    this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
+        this.cameras.main.scrollY += deltaY;
+        this.cameras.main.scrollY = Phaser.Math.Clamp(this.cameras.main.scrollY, 0, levels.length * 100 - 200);
+    });
+
     // Initial highlight
     this.updateSelection();
   }
@@ -71,6 +77,12 @@ export default class StageSelectScene extends Phaser.Scene {
       if (index === this.currentSelection) {
         button.setFillStyle(0x8888ff); // Highlight
         button.setScale(1.05);
+
+        // Auto-scroll to keep selection in view
+        // Center the selected button
+        const targetY = button.y - this.scale.height / 2;
+        this.cameras.main.scrollY = Phaser.Math.Clamp(targetY, 0, levels.length * 100 - 200);
+
       } else {
         button.setFillStyle(0x6666ff); // Normal
         button.setScale(1);

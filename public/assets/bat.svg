@@ -1,0 +1,6 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <path d="M2,12 Q8,2 16,12 Q24,2 30,12 L28,20 L16,16 L4,20 Z" fill="#4b0082" /> <!-- Wings -->
+  <circle cx="16" cy="14" r="6" fill="#000000" /> <!-- Body -->
+  <rect x="14" y="12" width="2" height="2" fill="#ff0000" /> <!-- Eye L -->
+  <rect x="18" y="12" width="2" height="2" fill="#ff0000" /> <!-- Eye R -->
+</svg>
