@@ -37,7 +37,7 @@ export const Translations = {
     GAME_OVER: 'ゲームオーバー',
     YOU_WIN: 'クリア！\nSPACEでメニューへ',
     SETTINGS: '設定',
-    LANGUAGE: '言語 (Language)',
+    LANGUAGE: '言語（Language）',
     DEBUG_MODE: 'デバッグモード',
     BACK: '戻る',
     ON: 'オン',
