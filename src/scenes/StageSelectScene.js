@@ -7,6 +7,11 @@ export default class StageSelectScene extends Phaser.Scene {
     super('StageSelectScene');
   }
 
+  preload() {
+    this.load.image('player', '/assets/player.svg');
+    this.load.image('player2', '/assets/player2.svg');
+  }
+
   create() {
     const { width, height } = this.scale;
 
