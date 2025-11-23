@@ -30,6 +30,7 @@ export default class GameScene extends Phaser.Scene {
     this.load.image('ground', '/assets/ground.svg');
     this.load.image('enemy', '/assets/enemy.svg');
     this.load.image('bat', '/assets/bat.svg');
+    this.load.image('ghost', '/assets/ghost.svg');
     this.load.image('star', '/assets/star.svg');
     this.load.image('goal', '/assets/goal.svg');
   }
@@ -187,7 +188,9 @@ export default class GameScene extends Phaser.Scene {
 
     this.levelData.enemies.forEach(enemyData => {
         const type = enemyData.type || 'ground';
-        const key = type === 'flying' ? 'bat' : 'enemy';
+        let key = 'enemy';
+        if (type === 'flying') key = 'bat';
+        if (type === 'vertical') key = 'ghost';
 
         const enemy = this.physics.add.sprite(enemyData.x, enemyData.y, key);
         enemy.setCollideWorldBounds(true);
@@ -201,6 +204,9 @@ export default class GameScene extends Phaser.Scene {
             enemy.body.setAllowGravity(false);
             enemy.setVelocityX(100);
         } else if (type === 'vertical') {
+            enemy.setScale(0.5); // Make ghost smaller
+            enemy.body.setSize(20, 26); // Tighten hitbox to visual bounds
+            enemy.body.setOffset(6, 2);
             enemy.body.setAllowGravity(false);
             // Vertical movement tween
             this.tweens.add({
