@@ -20,16 +20,21 @@ export default class SettingsScene extends Phaser.Scene {
     // Title
     this.titleText = this.add.text(width / 2, 50, this.t.SETTINGS, {
       fontSize: '48px',
-      fill: '#fff'
+      fill: '#fff',
+      padding: { top: 10, bottom: 10 }
     }).setOrigin(0.5);
 
     // --- Language ---
-    const langLabel = this.add.text(width * 0.3, 150, this.t.LANGUAGE, { fontSize: '32px', fill: '#aaa' }).setOrigin(0, 0.5);
+    const langLabel = this.add.text(width * 0.3, 150, this.t.LANGUAGE, {
+        fontSize: '32px',
+        fill: '#aaa',
+        padding: { top: 10, bottom: 10 }
+    }).setOrigin(0, 0.5);
     this.langBtn = this.add.text(width * 0.7, 150, this.lang === 'en' ? 'English' : '日本語', {
       fontSize: '32px',
       fill: '#fff',
       backgroundColor: '#444',
-      padding: { x: 10, y: 5 }
+      padding: { x: 10, y: 10 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
     this.langBtn.on('pointerdown', () => {
@@ -39,12 +44,16 @@ export default class SettingsScene extends Phaser.Scene {
     });
 
     // --- Debug Mode ---
-    const debugLabel = this.add.text(width * 0.3, 250, this.t.DEBUG_MODE, { fontSize: '32px', fill: '#aaa' }).setOrigin(0, 0.5);
+    const debugLabel = this.add.text(width * 0.3, 250, this.t.DEBUG_MODE, {
+        fontSize: '32px',
+        fill: '#aaa',
+        padding: { top: 10, bottom: 10 }
+    }).setOrigin(0, 0.5);
     this.debugBtn = this.add.text(width * 0.7, 250, this.debugMode ? this.t.ON : this.t.OFF, {
       fontSize: '32px',
       fill: this.debugMode ? '#2ecc71' : '#e74c3c',
       backgroundColor: '#444',
-      padding: { x: 10, y: 5 }
+      padding: { x: 10, y: 10 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
     this.debugBtn.on('pointerdown', () => {
@@ -64,7 +73,7 @@ export default class SettingsScene extends Phaser.Scene {
       fontSize: '32px',
       fill: '#fff',
       backgroundColor: '#666',
-      padding: { x: 20, y: 10 }
+      padding: { x: 20, y: 10, top: 10, bottom: 10 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
     backBtn.on('pointerdown', () => {
@@ -104,7 +113,8 @@ export default class SettingsScene extends Phaser.Scene {
 
           const label = this.add.text(width * 0.3, y, `Level ${level.id}: ${isCleared ? 'CLEARED' : '---'}`, {
               fontSize: '24px',
-              fill: isCleared ? '#2ecc71' : '#888'
+              fill: isCleared ? '#2ecc71' : '#888',
+              padding: { top: 5, bottom: 5 }
           }).setOrigin(0, 0.5);
 
           const toggle = this.add.rectangle(width * 0.7, y, 40, 40, isCleared ? 0x2ecc71 : 0x444)

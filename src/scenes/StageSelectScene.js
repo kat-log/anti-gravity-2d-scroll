@@ -24,7 +24,8 @@ export default class StageSelectScene extends Phaser.Scene {
     // Title
     const title = this.add.text(width / 2, 50, this.t.GAME_MENU, {
       fontSize: '48px',
-      fill: '#fff'
+      fill: '#fff',
+      padding: { top: 10, bottom: 10 }
     }).setOrigin(0.5);
 
     // Settings Button
@@ -37,7 +38,11 @@ export default class StageSelectScene extends Phaser.Scene {
     });
 
     // --- Left Column: Stage List ---
-    const subTitle = this.add.text(width * 0.3, 120, this.t.SELECT_STAGE, { fontSize: '32px', fill: '#aaa' }).setOrigin(0.5);
+    const subTitle = this.add.text(width * 0.3, 120, this.t.SELECT_STAGE, {
+        fontSize: '32px',
+        fill: '#aaa',
+        padding: { top: 10, bottom: 10 }
+    }).setOrigin(0.5);
 
     // List Camera (Left side)
     this.listCamera = this.cameras.add(0, 150, width * 0.6, height - 150);
@@ -65,12 +70,14 @@ export default class StageSelectScene extends Phaser.Scene {
 
       const text = this.add.text(buttonX, y - 10, clearedMark + level.name, {
         fontSize: '24px',
-        fill: '#fff'
+        fill: '#fff',
+        padding: { top: 5, bottom: 5 }
       }).setOrigin(0.5);
 
       const subText = this.add.text(buttonX, y + 20, highScoreText, {
         fontSize: '16px',
-        fill: '#ddd'
+        fill: '#ddd',
+        padding: { top: 5, bottom: 5 }
       }).setOrigin(0.5);
 
       this.cameras.main.ignore([button, text, subText]);
@@ -99,20 +106,33 @@ export default class StageSelectScene extends Phaser.Scene {
     // We allow selecting Ninja even if locked now, so no auto-revert here.
 
     const rightX = width * 0.8;
-    const charTitle = this.add.text(rightX, 120, this.t.CHARACTER, { fontSize: '32px', fill: '#aaa' }).setOrigin(0.5);
+    const charTitle = this.add.text(rightX, 120, this.t.CHARACTER, {
+        fontSize: '32px',
+        fill: '#aaa',
+        padding: { top: 10, bottom: 10 }
+    }).setOrigin(0.5);
 
     // Character Box
     this.charBox = this.add.rectangle(rightX, 250, 300, 200, 0x333333).setStrokeStyle(2, 0x666666);
-    this.charName = this.add.text(rightX, 320, '', { fontSize: '28px', fill: '#fff' }).setOrigin(0.5);
+    this.charName = this.add.text(rightX, 320, '', {
+        fontSize: '28px',
+        fill: '#fff',
+        padding: { top: 10, bottom: 10 }
+    }).setOrigin(0.5);
     this.charIcon = this.add.image(rightX, 240, 'player').setScale(3);
 
     // Always show Change text now
-    const unlockText = this.add.text(rightX, 380, this.t.CHANGE, { fontSize: '16px', fill: '#888' }).setOrigin(0.5);
+    const unlockText = this.add.text(rightX, 380, this.t.CHANGE, {
+        fontSize: '16px',
+        fill: '#888',
+        padding: { top: 5, bottom: 5 }
+    }).setOrigin(0.5);
 
     this.charDesc = this.add.text(rightX, 430, '', {
         fontSize: '16px',
         fill: '#aaa',
-        align: 'center'
+        align: 'center',
+        padding: { top: 5, bottom: 5 }
     }).setOrigin(0.5);
 
     this.listCamera.ignore([this.charBox, this.charName, this.charIcon, charTitle, unlockText, this.charDesc]);

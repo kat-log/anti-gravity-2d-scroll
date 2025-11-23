@@ -167,10 +167,18 @@ export default class GameScene extends Phaser.Scene {
 
     // --- UI ---
     this.score = 0;
-    this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#fff' });
-    this.scoreText.setScrollFactor(0); // Fix to screen
+    this.scoreText = this.add.text(16, 16, 'Score: 0', {
+        fontSize: '32px',
+        fill: '#fff',
+        padding: { top: 10, bottom: 10 }
+    }).setScrollFactor(0); // Fix to screen
 
-    this.statusText = this.add.text(400, 300, '', { fontSize: '48px', fill: '#fff', align: 'center' }).setOrigin(0.5);
+    this.statusText = this.add.text(400, 300, '', {
+        fontSize: '48px',
+        fill: '#fff',
+        align: 'center',
+        padding: { top: 10, bottom: 10 }
+    }).setOrigin(0.5);
     this.statusText.setScrollFactor(0); // Fix to screen
 
     // Level Name Display
