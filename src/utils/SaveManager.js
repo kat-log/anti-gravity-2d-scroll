@@ -23,4 +23,12 @@ export default class SaveManager {
     const progress = this.getProgress();
     return progress[levelId] || { cleared: false, highScore: 0 };
   }
+
+  static saveCharacter(type) {
+    localStorage.setItem(STORAGE_KEY + '-char', type);
+  }
+
+  static getCharacter() {
+    return localStorage.getItem(STORAGE_KEY + '-char') || 'standard';
+  }
 }
