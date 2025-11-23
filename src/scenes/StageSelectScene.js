@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { levels } from '../levels';
+import SaveManager from '../utils/SaveManager';
 
 export default class StageSelectScene extends Phaser.Scene {
   constructor() {
@@ -31,16 +32,26 @@ export default class StageSelectScene extends Phaser.Scene {
       // Y position relative to the top of the list camera
       const y = 50 + index * 100;
 
-      const button = this.add.rectangle(width / 2, y, 400, 60, 0x6666ff)
+      const button = this.add.rectangle(width / 2, y, 400, 80, 0x6666ff)
         .setInteractive({ useHandCursor: true });
 
-      const text = this.add.text(width / 2, y, level.name, {
-        fontSize: '32px',
+      // Get Progress
+      const progress = SaveManager.getLevelData(level.id);
+      const clearedMark = progress.cleared ? '★ ' : '';
+      const highScoreText = progress.cleared ? `High Score: ${progress.highScore}` : 'Not Cleared';
+
+      const text = this.add.text(width / 2, y - 10, clearedMark + level.name, {
+        fontSize: '28px',
         fill: '#fff'
       }).setOrigin(0.5);
 
+      const subText = this.add.text(width / 2, y + 20, highScoreText, {
+        fontSize: '16px',
+        fill: '#ddd'
+      }).setOrigin(0.5);
+
       // Hide from main camera (so they don't overlap title)
-      this.cameras.main.ignore([button, text]);
+      this.cameras.main.ignore([button, text, subText]);
 
       // Store button data for updates
       button.setData('index', index);
@@ -48,6 +59,7 @@ export default class StageSelectScene extends Phaser.Scene {
 
       // Store text reference for scaling/color if needed (optional)
       button.setData('text', text);
+      button.setData('subText', subText);
 
       // Mouse interactions
       button.on('pointerover', () => {
@@ -92,10 +104,13 @@ export default class StageSelectScene extends Phaser.Scene {
   updateSelection() {
     this.buttons.forEach((button, index) => {
       const text = button.getData('text');
+      const subText = button.getData('subText');
+
       if (index === this.currentSelection) {
         button.setFillStyle(0x8888ff); // Highlight
         button.setScale(1.05);
         if (text) text.setScale(1.05);
+        if (subText) subText.setScale(1.05);
 
         // Auto-scroll to keep selection in view
         // Center the selected button in the list camera
@@ -108,6 +123,7 @@ export default class StageSelectScene extends Phaser.Scene {
         button.setFillStyle(0x6666ff); // Normal
         button.setScale(1);
         if (text) text.setScale(1);
+        if (subText) subText.setScale(1);
       }
     });
   }

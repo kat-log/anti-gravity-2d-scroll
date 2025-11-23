@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import SoundManager from '../utils/SoundManager';
 import { levels } from '../levels';
+import SaveManager from '../utils/SaveManager';
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -237,6 +238,10 @@ export default class GameScene extends Phaser.Scene {
 
   reachGoal(player, goal) {
     this.physics.pause();
+
+    // Save Progress
+    SaveManager.saveLevelProgress(this.levelData.id, this.score);
+
     this.statusText.setText('YOU WIN!\nPress SPACE for Menu');
     this.soundManager.playWin();
 
