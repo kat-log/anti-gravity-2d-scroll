@@ -79,6 +79,11 @@ export default class GameScene extends Phaser.Scene {
 
     this.cursors = this.input.keyboard.createCursorKeys();
 
+    // Return to Menu
+    this.input.keyboard.on('keydown-ESC', () => {
+        this.scene.start('StageSelectScene');
+    });
+
     // --- Collectibles (Stars) ---
     this.stars = this.physics.add.group({
       key: 'star',
