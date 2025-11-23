@@ -16,6 +16,11 @@ export default class SaveManager {
     }
 
     progress[levelId] = levelData;
+    progress[levelId] = levelData;
+    this.saveProgress(progress);
+  }
+
+  static saveProgress(progress) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
   }
 
@@ -30,5 +35,28 @@ export default class SaveManager {
 
   static getCharacter() {
     return localStorage.getItem(STORAGE_KEY + '-char') || 'standard';
+  }
+
+  static setLanguage(lang) {
+    localStorage.setItem(STORAGE_KEY + '-lang', lang);
+  }
+
+  static getLanguage() {
+    return localStorage.getItem(STORAGE_KEY + '-lang') || 'en';
+  }
+
+  static setDebugMode(enabled) {
+    localStorage.setItem(STORAGE_KEY + '-debug', enabled);
+  }
+
+  static getDebugMode() {
+    return localStorage.getItem(STORAGE_KEY + '-debug') === 'true';
+  }
+
+  static setLevelCleared(levelId, isCleared) {
+    const progress = this.getProgress();
+    if (!progress[levelId]) progress[levelId] = { cleared: false, highScore: 0 };
+    progress[levelId].cleared = isCleared;
+    this.saveProgress(progress);
   }
 }

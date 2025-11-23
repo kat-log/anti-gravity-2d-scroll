@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import SoundManager from '../utils/SoundManager';
 import { levels } from '../levels';
 import SaveManager from '../utils/SaveManager';
+import { Translations } from '../utils/Translations';
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -18,6 +19,9 @@ export default class GameScene extends Phaser.Scene {
     const index = data.levelIndex !== undefined ? data.levelIndex : 0;
     this.levelData = levels[index];
     this.characterType = data.characterType || 'standard';
+
+    this.lang = SaveManager.getLanguage();
+    this.t = Translations[this.lang];
   }
 
   preload() {
@@ -166,7 +170,7 @@ export default class GameScene extends Phaser.Scene {
     this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#fff' });
     this.scoreText.setScrollFactor(0); // Fix to screen
 
-    this.statusText = this.add.text(400, 300, '', { fontSize: '48px', fill: '#fff' }).setOrigin(0.5);
+    this.statusText = this.add.text(400, 300, '', { fontSize: '48px', fill: '#fff', align: 'center' }).setOrigin(0.5);
     this.statusText.setScrollFactor(0); // Fix to screen
 
     // Level Name Display
@@ -254,7 +258,7 @@ export default class GameScene extends Phaser.Scene {
   hitEnemy(player, enemy) {
     this.physics.pause();
     player.setTint(0xff0000); // Tint red
-    this.statusText.setText('GAME OVER');
+    this.statusText.setText(this.t.GAME_OVER);
     this.soundManager.playHit();
 
     // Simple Game Over: Restart scene after 1 second
@@ -269,7 +273,7 @@ export default class GameScene extends Phaser.Scene {
     // Save Progress
     SaveManager.saveLevelProgress(this.levelData.id, this.score);
 
-    this.statusText.setText('YOU WIN!\nPress SPACE for Menu');
+    this.statusText.setText(this.t.YOU_WIN);
     this.soundManager.playWin();
 
     this.input.keyboard.once('keydown-SPACE', () => {

@@ -1,6 +1,8 @@
+
 import Phaser from 'phaser';
 import { levels } from '../levels';
 import SaveManager from '../utils/SaveManager';
+import { Translations } from '../utils/Translations';
 
 export default class StageSelectScene extends Phaser.Scene {
   constructor() {
@@ -10,19 +12,32 @@ export default class StageSelectScene extends Phaser.Scene {
   preload() {
     this.load.image('player', '/assets/player.svg');
     this.load.image('player2', '/assets/player2.svg');
+    this.load.image('gear', '/assets/gear.svg');
+    this.load.image('lock', '/assets/lock.svg');
   }
 
   create() {
     const { width, height } = this.scale;
+    this.lang = SaveManager.getLanguage();
+    this.t = Translations[this.lang];
 
     // Title
-    const title = this.add.text(width / 2, 50, 'GAME MENU', {
+    const title = this.add.text(width / 2, 50, this.t.GAME_MENU, {
       fontSize: '48px',
       fill: '#fff'
     }).setOrigin(0.5);
 
+    // Settings Button
+    const gearBtn = this.add.image(width - 50, 50, 'gear')
+        .setInteractive({ useHandCursor: true })
+        .setScale(0.8);
+
+    gearBtn.on('pointerdown', () => {
+        this.scene.start('SettingsScene');
+    });
+
     // --- Left Column: Stage List ---
-    const subTitle = this.add.text(width * 0.3, 120, 'SELECT STAGE', { fontSize: '32px', fill: '#aaa' }).setOrigin(0.5);
+    const subTitle = this.add.text(width * 0.3, 120, this.t.SELECT_STAGE, { fontSize: '32px', fill: '#aaa' }).setOrigin(0.5);
 
     // List Camera (Left side)
     this.listCamera = this.cameras.add(0, 150, width * 0.6, height - 150);
@@ -30,7 +45,7 @@ export default class StageSelectScene extends Phaser.Scene {
     this.listCamera.scrollX = -20; // Offset to center content in half-width
 
     // Ensure title is NOT seen by list camera
-    this.listCamera.ignore([title, subTitle]);
+    this.listCamera.ignore([title, subTitle, gearBtn]);
 
     this.buttons = [];
     this.currentSelection = 0;
@@ -39,16 +54,14 @@ export default class StageSelectScene extends Phaser.Scene {
     levels.forEach((level, index) => {
       const y = 50 + index * 100;
 
-      // Button centered in left column (width * 0.3)
-      // But inside camera (width * 0.6), center is width * 0.3
       const buttonX = width * 0.3;
 
       const button = this.add.rectangle(buttonX, y, 350, 80, 0x6666ff)
         .setInteractive({ useHandCursor: true });
 
       const progress = SaveManager.getLevelData(level.id);
-      const clearedMark = progress.cleared ? '★ ' : '';
-      const highScoreText = progress.cleared ? `High Score: ${progress.highScore}` : 'Not Cleared';
+      const clearedMark = progress.cleared ? this.t.CLEARED : '';
+      const highScoreText = progress.cleared ? `${this.t.HIGH_SCORE}${progress.highScore}` : this.t.NOT_CLEARED;
 
       const text = this.add.text(buttonX, y - 10, clearedMark + level.name, {
         fontSize: '24px',
@@ -83,23 +96,18 @@ export default class StageSelectScene extends Phaser.Scene {
     const l3 = SaveManager.getLevelData(3).cleared;
     this.ninjaUnlocked = l1 && l2 && l3;
 
-    // If Ninja is selected but not unlocked (e.g. save data manipulation or reset), revert to standard
-    if (this.characterType === 'ninja' && !this.ninjaUnlocked) {
-        this.characterType = 'standard';
-        SaveManager.saveCharacter('standard');
-    }
+    // We allow selecting Ninja even if locked now, so no auto-revert here.
 
     const rightX = width * 0.8;
-    const charTitle = this.add.text(rightX, 120, 'CHARACTER', { fontSize: '32px', fill: '#aaa' }).setOrigin(0.5);
+    const charTitle = this.add.text(rightX, 120, this.t.CHARACTER, { fontSize: '32px', fill: '#aaa' }).setOrigin(0.5);
 
     // Character Box
     this.charBox = this.add.rectangle(rightX, 250, 300, 200, 0x333333).setStrokeStyle(2, 0x666666);
-    this.charName = this.add.text(rightX, 320, 'STANDARD', { fontSize: '28px', fill: '#fff' }).setOrigin(0.5);
+    this.charName = this.add.text(rightX, 320, '', { fontSize: '28px', fill: '#fff' }).setOrigin(0.5);
     this.charIcon = this.add.image(rightX, 240, 'player').setScale(3);
 
-    const unlockText = this.ninjaUnlocked ?
-        this.add.text(rightX, 380, '▲ ▼ Change', { fontSize: '16px', fill: '#888' }).setOrigin(0.5) :
-        this.add.text(rightX, 380, 'Clear Lv1-3 to Unlock', { fontSize: '16px', fill: '#555' }).setOrigin(0.5);
+    // Always show Change text now
+    const unlockText = this.add.text(rightX, 380, this.t.CHANGE, { fontSize: '16px', fill: '#888' }).setOrigin(0.5);
 
     this.charDesc = this.add.text(rightX, 430, '', {
         fontSize: '16px',
@@ -114,7 +122,7 @@ export default class StageSelectScene extends Phaser.Scene {
         if (this.activeColumn === 0) {
             this.currentSelection--;
             if (this.currentSelection < 0) this.currentSelection = levels.length - 1;
-        } else if (this.activeColumn === 1 && this.ninjaUnlocked) {
+        } else if (this.activeColumn === 1) { // Removed && this.ninjaUnlocked
             this.toggleCharacter();
         }
         this.updateSelection();
@@ -124,7 +132,7 @@ export default class StageSelectScene extends Phaser.Scene {
         if (this.activeColumn === 0) {
             this.currentSelection++;
             if (this.currentSelection >= levels.length) this.currentSelection = 0;
-        } else if (this.activeColumn === 1 && this.ninjaUnlocked) {
+        } else if (this.activeColumn === 1) { // Removed && this.ninjaUnlocked
             this.toggleCharacter();
         }
         this.updateSelection();
@@ -162,15 +170,22 @@ export default class StageSelectScene extends Phaser.Scene {
 
   updateCharacterDisplay() {
       if (this.characterType === 'ninja') {
-          this.charName.setText('NINJA');
-          this.charName.setColor('#2ecc71');
-          this.charIcon.setTexture('player2');
-          this.charDesc.setText('Low Jump Power\nDouble Jump Ability');
+          if (this.ninjaUnlocked) {
+              this.charName.setText(this.t.NINJA_NAME);
+              this.charName.setColor('#2ecc71');
+              this.charIcon.setTexture('player2');
+              this.charDesc.setText(this.t.NINJA_DESC);
+          } else {
+              this.charName.setText('LOCKED');
+              this.charName.setColor('#888');
+              this.charIcon.setTexture('lock');
+              this.charDesc.setText(this.t.UNLOCK_HINT);
+          }
       } else {
-          this.charName.setText('STANDARD');
+          this.charName.setText(this.t.STANDARD_NAME);
           this.charName.setColor('#fff');
           this.charIcon.setTexture('player');
-          this.charDesc.setText('High Jump Power\nSimple & Reliable');
+          this.charDesc.setText(this.t.STANDARD_DESC);
       }
   }
 
@@ -192,7 +207,7 @@ export default class StageSelectScene extends Phaser.Scene {
         // Auto-scroll
         const viewportHeight = this.scale.height - 150;
         const targetY = button.y - viewportHeight / 2;
-        this.listCamera.scrollY = Phaser.Math.Clamp(targetY, 0, levels.length * 100 - 200);
+        this.listCamera.scrollY = Phaser.Math.Clamp(this.listCamera.scrollY, 0, levels.length * 100 - 200);
       } else {
         button.setFillStyle(0x6666ff);
         button.setScale(1);
@@ -211,6 +226,13 @@ export default class StageSelectScene extends Phaser.Scene {
 
   confirmSelection() {
       if (this.activeColumn === 0) {
+        // Prevent starting if locked character is selected
+        if (this.characterType === 'ninja' && !this.ninjaUnlocked) {
+            // Shake effect or visual feedback could go here
+            this.cameras.main.shake(200, 0.01);
+            return;
+        }
+
         this.scene.start('GameScene', {
             levelIndex: this.currentSelection,
             characterType: this.characterType

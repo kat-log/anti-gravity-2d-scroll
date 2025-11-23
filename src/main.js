@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import StageSelectScene from './scenes/StageSelectScene';
 import GameScene from './scenes/GameScene';
+import SettingsScene from './scenes/SettingsScene';
 import './style.css';
 
 const config = {
@@ -14,7 +15,7 @@ const config = {
       debug: false
     }
   },
-  scene: [StageSelectScene, GameScene]
+  scene: [StageSelectScene, GameScene, SettingsScene]
 };
 
 const game = new Phaser.Game(config);
