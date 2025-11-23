@@ -289,7 +289,8 @@ export default class GameScene extends Phaser.Scene {
                   repeat: 10,
                   onComplete: () => {
                       // Disable and hide
-                      platform.disableBody(true, true);
+                      platform.body.setEnable(false);
+                      platform.setVisible(false);
                       // Optional: Respawn? No, permanent for now.
                   }
               });
