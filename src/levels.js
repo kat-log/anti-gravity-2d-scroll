@@ -3,6 +3,7 @@ export const levels = [
   {
     id: 1,
     name: 'Level 1: Grassland',
+    background: 0x87CEEB,
     width: 2400,
     height: 600,
     playerStart: { x: 100, y: 450 },
@@ -40,6 +41,7 @@ export const levels = [
   {
     id: 2,
     name: 'Level 2: Sky High',
+    background: 0x1E90FF,
     width: 2400,
     height: 600,
     playerStart: { x: 100, y: 450 },
@@ -73,6 +75,7 @@ export const levels = [
   {
     id: 3,
     name: 'Level 3: Danger Zone',
+    background: 0x2F4F4F,
     width: 2400,
     height: 600,
     playerStart: { x: 100, y: 450 },
@@ -111,6 +114,7 @@ export const levels = [
   {
     id: 4,
     name: 'Level 4: Canyon Jump',
+    background: 0xE67E22,
     width: 2400,
     height: 600,
     hasGround: false, // No continuous ground
@@ -145,6 +149,7 @@ export const levels = [
   {
     id: 5,
     name: 'Level 5: Master Mode',
+    background: 0x8E44AD,
     width: 2400,
     height: 600,
     hasGround: false,
@@ -180,6 +185,7 @@ export const levels = [
   {
     id: 6,
     name: 'Level 6: Moving Sky',
+    background: 0xADD8E6,
     width: 2400,
     height: 600,
     hasGround: false,
@@ -214,6 +220,7 @@ export const levels = [
   {
     id: 7,
     name: 'Level 7: Crumble Cave',
+    background: 0x8B4513,
     width: 2400,
     height: 600,
     hasGround: true, // Ground exists but has pits
@@ -250,6 +257,7 @@ export const levels = [
   {
     id: 8,
     name: 'Level 8: The Gauntlet',
+    background: 0x2C0000,
     width: 3000,
     height: 600,
     hasGround: false,

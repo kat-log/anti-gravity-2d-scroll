@@ -46,6 +46,7 @@ export default class GameScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, this.levelData.width, this.levelData.height);
     this.physics.world.setBoundsCollision(true, true, true, false); // Allow falling through bottom
     this.cameras.main.setBounds(0, 0, this.levelData.width, this.levelData.height);
+    this.cameras.main.setBackgroundColor(this.levelData.background || 0x000000);
 
     // --- Level Setup ---
     // Ground
