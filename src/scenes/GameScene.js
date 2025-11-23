@@ -244,8 +244,8 @@ export default class GameScene extends Phaser.Scene {
             });
         } else if (type === 'bear') {
             enemy.setScale(0.7);
-            enemy.body.setSize(40, 30);
-            enemy.body.setOffset(4, 1);
+            enemy.body.setSize(60, 60); // Increased size
+            enemy.body.setOffset(30, 20); // Shifted to center
             enemy.setGravityY(800);
             enemy.setImmovable(true); // Bear doesn't move
             // Throw snowball logic
@@ -258,7 +258,7 @@ export default class GameScene extends Phaser.Scene {
                         const snowball = this.physics.add.sprite(enemy.x, enemy.y, 'snowball');
                         this.snowballs.add(snowball);
                         snowball.setScale(0.5);
-                        snowball.setCircle(5); // Tight circle hitbox
+                        snowball.body.setCircle(10, 10, 10); // Centered circle
                         snowball.setGravityY(400);
                         // Throw towards player direction
                         const direction = this.player.x < enemy.x ? -1 : 1;
