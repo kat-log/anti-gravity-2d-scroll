@@ -270,8 +270,8 @@ export default class GameScene extends Phaser.Scene {
             });
         } else if (type === 'penguin') {
              enemy.setScale(0.6);
-             enemy.body.setSize(60, 70); // Increased width
-             enemy.body.setOffset(35, 5); // Shifted further right
+             enemy.body.setSize(70, 70); // Keep size
+             enemy.body.setOffset(35, 30); // Lowered top edge significantly (was 15)
              enemy.setGravityY(800);
              enemy.setImmovable(false);
              enemy.setVelocityX(200); // Fast!
