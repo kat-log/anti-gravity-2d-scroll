@@ -107,15 +107,15 @@ export default class GameScene extends Phaser.Scene {
               ease: 'Sine.easeInOut',
               onUpdate: (tween, target) => {
                   // Update body position to match sprite
-                  // For dynamic bodies, this happens automatically if we tween the sprite?
-                  // No, we should tween the body or update body in update.
-                  // Actually, if we tween the sprite, the body follows if it's a sprite.
-                  // But this is a TileSprite.
-                  // Let's just trust Phaser to sync body if we tween the game object.
                   // We need to calculate delta for player movement.
                   const prevX = target.getData('prevX') || target.x;
+                  const prevY = target.getData('prevY') || target.y;
+
                   target.setData('deltaX', target.x - prevX);
+                  target.setData('deltaY', target.y - prevY);
+
                   target.setData('prevX', target.x);
+                  target.setData('prevY', target.y);
               }
           });
       }
@@ -263,8 +263,13 @@ export default class GameScene extends Phaser.Scene {
       if (platform.getData('isMoving')) {
           if (player.body.touching.down && platform.body.touching.up) {
               const deltaX = platform.getData('deltaX');
+              const deltaY = platform.getData('deltaY');
+
               if (deltaX) {
                   player.x += deltaX;
+              }
+              if (deltaY) {
+                  player.y += deltaY;
               }
           }
       }
