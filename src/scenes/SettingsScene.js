@@ -24,7 +24,7 @@ export default class SettingsScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // --- Language ---
-    this.add.text(width * 0.3, 150, this.t.LANGUAGE, { fontSize: '32px', fill: '#aaa' }).setOrigin(0, 0.5);
+    const langLabel = this.add.text(width * 0.3, 150, this.t.LANGUAGE, { fontSize: '32px', fill: '#aaa' }).setOrigin(0, 0.5);
     this.langBtn = this.add.text(width * 0.7, 150, this.lang === 'en' ? 'English' : '日本語', {
       fontSize: '32px',
       fill: '#fff',
@@ -39,7 +39,7 @@ export default class SettingsScene extends Phaser.Scene {
     });
 
     // --- Debug Mode ---
-    this.add.text(width * 0.3, 250, this.t.DEBUG_MODE, { fontSize: '32px', fill: '#aaa' }).setOrigin(0, 0.5);
+    const debugLabel = this.add.text(width * 0.3, 250, this.t.DEBUG_MODE, { fontSize: '32px', fill: '#aaa' }).setOrigin(0, 0.5);
     this.debugBtn = this.add.text(width * 0.7, 250, this.debugMode ? this.t.ON : this.t.OFF, {
       fontSize: '32px',
       fill: this.debugMode ? '#2ecc71' : '#e74c3c',
@@ -70,12 +70,36 @@ export default class SettingsScene extends Phaser.Scene {
     backBtn.on('pointerdown', () => {
       this.scene.start('StageSelectScene');
     });
+
+    // --- Debug Level Toggles ---
+    this.levelToggles = [];
+    if (this.debugMode) {
+        // Camera for the list
+        const listY = 300;
+        const listHeight = 220; // Leave space for Back button
+        this.debugCamera = this.cameras.add(0, listY, width, listHeight);
+        this.debugCamera.setBackgroundColor(0x333333);
+
+        // Ignore main UI elements in debug camera
+        this.debugCamera.ignore([this.titleText, langLabel, this.langBtn, debugLabel, this.debugBtn, backBtn]);
+        // Also ignore the labels for Lang/Debug
+        // (I need to capture them in variables to ignore them, or just ignore everything created so far)
+        // Simpler: Create toggles, then ignore them in Main Camera.
+
+        this.createLevelToggles(width);
+
+        // Mouse Wheel for scrolling
+        this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
+            this.debugCamera.scrollY += deltaY;
+            this.debugCamera.scrollY = Phaser.Math.Clamp(this.debugCamera.scrollY, 0, Math.max(0, levels.length * 60 - listHeight));
+        });
+    }
   }
 
-  createLevelToggles(width, height) {
-      const startY = 320;
+  createLevelToggles(width) {
+      const startY = 20; // Padding inside the camera
       levels.forEach((level, index) => {
-          const y = startY + index * 50;
+          const y = startY + index * 60;
           const isCleared = SaveManager.getLevelData(level.id).cleared;
 
           const label = this.add.text(width * 0.3, y, `Level ${level.id}: ${isCleared ? 'CLEARED' : '---'}`, {
@@ -94,6 +118,9 @@ export default class SettingsScene extends Phaser.Scene {
 
           this.levelToggles.push(label, toggle);
       });
+
+      // Hide these from the main camera so they only show in the debugCamera
+      this.cameras.main.ignore(this.levelToggles);
   }
 
   refreshUI() {
