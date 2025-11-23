@@ -227,7 +227,7 @@ export default class StageSelectScene extends Phaser.Scene {
         // Auto-scroll
         const viewportHeight = this.scale.height - 150;
         const targetY = button.y - viewportHeight / 2;
-        this.listCamera.scrollY = Phaser.Math.Clamp(this.listCamera.scrollY, 0, levels.length * 100 - 200);
+        this.listCamera.scrollY = Phaser.Math.Clamp(targetY, 0, Math.max(0, levels.length * 100 - viewportHeight + 50));
       } else {
         button.setFillStyle(0x6666ff);
         button.setScale(1);

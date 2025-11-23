@@ -63,12 +63,68 @@ export default class GameScene extends Phaser.Scene {
     }
 
     // Platforms
-    this.platforms = this.physics.add.staticGroup();
+    this.platforms = this.physics.add.staticGroup(); // Note: Static bodies don't move with physics, but we can move them manually/tween
+    // Actually, for moving platforms, we need kinematic bodies or just update static body position?
+    // Phaser Static bodies can be moved but don't carry the player automatically.
+    // Let's use a separate group for moving platforms if needed, or just move these.
+    // Arcade Physics "Static" bodies are designed not to move. "Kinematic" is better?
+    // Phaser 3 Arcade Physics doesn't have "Kinematic" in the same way. It has dynamic bodies with `immovable: true`.
+
+    this.movingPlatforms = this.physics.add.group({
+        allowGravity: false,
+        immovable: true
+    });
 
     this.levelData.platforms.forEach(p => {
-      const platform = this.add.tileSprite(p.x, p.y, p.w, p.h, 'ground');
-      this.physics.add.existing(platform, true);
-      this.platforms.add(platform);
+      let platform;
+
+      if (p.move || p.type === 'crumble') {
+          // Use dynamic body for moving/crumbling
+          platform = this.add.tileSprite(p.x, p.y, p.w, p.h, 'ground');
+          this.physics.add.existing(platform);
+          platform.body.setAllowGravity(false);
+          platform.body.setImmovable(true);
+          this.movingPlatforms.add(platform);
+      } else {
+          // Standard static platform
+          platform = this.add.tileSprite(p.x, p.y, p.w, p.h, 'ground');
+          this.physics.add.existing(platform, true);
+          this.platforms.add(platform);
+      }
+
+      // Moving Platform Logic
+      if (p.move) {
+          platform.setData('isMoving', true);
+          platform.setData('moveSpeed', p.move.speed || 100); // Not used if tweening
+
+          this.tweens.add({
+              targets: platform,
+              x: p.move.x ? p.x + p.move.x : p.x,
+              y: p.move.y ? p.y + p.move.y : p.y,
+              duration: p.move.duration || 2000,
+              yoyo: true,
+              repeat: -1,
+              ease: 'Sine.easeInOut',
+              onUpdate: (tween, target) => {
+                  // Update body position to match sprite
+                  // For dynamic bodies, this happens automatically if we tween the sprite?
+                  // No, we should tween the body or update body in update.
+                  // Actually, if we tween the sprite, the body follows if it's a sprite.
+                  // But this is a TileSprite.
+                  // Let's just trust Phaser to sync body if we tween the game object.
+                  // We need to calculate delta for player movement.
+                  const prevX = target.getData('prevX') || target.x;
+                  target.setData('deltaX', target.x - prevX);
+                  target.setData('prevX', target.x);
+              }
+          });
+      }
+
+      // Crumbling Platform Logic
+      if (p.type === 'crumble') {
+          platform.setData('isCrumble', true);
+          platform.setTint(0xaaaaaa); // Visual cue
+      }
     });
 
     // --- Player ---
@@ -137,11 +193,23 @@ export default class GameScene extends Phaser.Scene {
         enemy.setBounce(1, 0);
         enemy.setFriction(0, 0);
         enemy.setData('originX', enemyData.x);
+        enemy.setData('originY', enemyData.y);
         enemy.setData('type', type);
 
         if (type === 'flying') {
-            enemy.body.setAllowGravity(false); // No gravity for bats
+            enemy.body.setAllowGravity(false);
             enemy.setVelocityX(100);
+        } else if (type === 'vertical') {
+            enemy.body.setAllowGravity(false);
+            // Vertical movement tween
+            this.tweens.add({
+                targets: enemy,
+                y: enemyData.y + (enemyData.range || 200),
+                duration: 2000,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut'
+            });
         } else {
             enemy.setGravityY(800);
             enemy.setVelocityX(150);
@@ -152,11 +220,14 @@ export default class GameScene extends Phaser.Scene {
 
     // --- Collisions ---
     this.physics.add.collider(this.player, this.platforms);
+    this.physics.add.collider(this.player, this.movingPlatforms, this.handlePlatformCollision, null, this);
+
     if (ground) {
         this.physics.add.collider(this.player, ground);
         this.physics.add.collider(this.enemies, ground);
     }
     this.physics.add.collider(this.enemies, this.platforms);
+    this.physics.add.collider(this.enemies, this.movingPlatforms);
     this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
 
     // --- Goal ---
@@ -187,6 +258,39 @@ export default class GameScene extends Phaser.Scene {
     this.time.delayedCall(2000, () => levelText.destroy());
   }
 
+  handlePlatformCollision(player, platform) {
+      // Moving Platform: Move player with it
+      if (platform.getData('isMoving')) {
+          if (player.body.touching.down && platform.body.touching.up) {
+              const deltaX = platform.getData('deltaX');
+              if (deltaX) {
+                  player.x += deltaX;
+              }
+          }
+      }
+
+      // Crumbling Platform
+      if (platform.getData('isCrumble') && !platform.getData('crumbling')) {
+          if (player.body.touching.down && platform.body.touching.up) {
+              platform.setData('crumbling', true);
+
+              // Shake effect
+              this.tweens.add({
+                  targets: platform,
+                  x: platform.x + 5,
+                  duration: 50,
+                  yoyo: true,
+                  repeat: 10,
+                  onComplete: () => {
+                      // Disable and hide
+                      platform.disableBody(true, true);
+                      // Optional: Respawn? No, permanent for now.
+                  }
+              });
+          }
+      }
+  }
+
   update() {
     if (!this.player) return;
 
@@ -215,7 +319,9 @@ export default class GameScene extends Phaser.Scene {
         const type = enemy.getData('type');
         const range = 200; // Patrol range
 
-        if (type === 'flying') {
+        if (type === 'vertical') {
+            // Handled by tween, just check bounds
+        } else if (type === 'flying') {
             // Flying enemies just move back and forth
             if (enemy.x > originX + range) {
                 enemy.setVelocityX(-100);
