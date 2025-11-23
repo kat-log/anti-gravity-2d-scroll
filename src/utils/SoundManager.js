@@ -55,15 +55,16 @@ export default class SoundManager {
     osc.connect(gain);
     gain.connect(this.ctx.destination);
 
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(100, this.ctx.currentTime);
-    osc.frequency.linearRampToValueAtTime(50, this.ctx.currentTime + 0.3);
+    // Softer "Fail" sound (Triangle wave, sliding down)
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(100, this.ctx.currentTime + 0.4);
 
-    gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+    gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
 
     osc.start();
-    osc.stop(this.ctx.currentTime + 0.3);
+    osc.stop(this.ctx.currentTime + 0.4);
   }
 
   playWin() {
