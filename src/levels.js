@@ -296,5 +296,76 @@ export const levels = [
       { x: 2200, y: 100, type: 'flying' },
       { x: 2600, y: 100, type: 'vertical', range: 200 }
     ]
+  },
+  // Level 9: Ice World (Slippery & Penguins)
+  {
+    id: 9,
+    name: 'Level 9: Ice World',
+    background: 0x87CEFA, // Light Sky Blue
+    width: 2400,
+    height: 600,
+    hasGround: false,
+    playerStart: { x: 100, y: 450 },
+    goal: { x: 2300, y: 450 },
+    platforms: [
+      { x: 100, y: 500, w: 200, h: 40 },
+      // Ice Slide
+      { x: 400, y: 500, w: 300, h: 20, type: 'ice' },
+      { x: 800, y: 450, w: 200, h: 20, type: 'ice' },
+      // Penguin Patrol
+      { x: 1200, y: 450, w: 400, h: 20, type: 'ice' },
+      // Jumping on ice
+      { x: 1600, y: 350, w: 100, h: 20, type: 'ice' },
+      { x: 1800, y: 250, w: 100, h: 20, type: 'ice' },
+      { x: 2000, y: 350, w: 100, h: 20, type: 'ice' },
+      { x: 2300, y: 500, w: 200, h: 40 }
+    ],
+    stars: [
+      { x: 500, y: 450 },
+      { x: 1200, y: 400 },
+      { x: 1800, y: 200 },
+      { x: 2000, y: 300 }
+    ],
+    enemies: [
+      { x: 1200, y: 410, type: 'penguin' },
+      { x: 1400, y: 410, type: 'penguin' },
+      { x: 500, y: 460, type: 'penguin' }
+    ]
+  },
+  // Level 10: Snowball Peak (Bears & Snowballs)
+  {
+    id: 10,
+    name: 'Level 10: Snowball Peak',
+    background: 0xF0F8FF, // Alice Blue
+    width: 2400,
+    height: 600,
+    hasGround: true,
+    playerStart: { x: 100, y: 450 },
+    goal: { x: 2300, y: 100 },
+    platforms: [
+      // Climbing up
+      { x: 400, y: 400, w: 150, h: 20, type: 'ice' },
+      { x: 600, y: 300, w: 150, h: 20, type: 'ice' },
+      // Bear Ledge
+      { x: 900, y: 250, w: 200, h: 20 },
+      // Upper Traverse
+      { x: 1300, y: 250, w: 300, h: 20, type: 'ice' },
+      // Bear Tower
+      { x: 1800, y: 350, w: 100, h: 20 },
+      { x: 1800, y: 200, w: 100, h: 20 },
+      { x: 2100, y: 150, w: 150, h: 20 }
+    ],
+    stars: [
+      { x: 400, y: 350 },
+      { x: 900, y: 200 },
+      { x: 1300, y: 200 },
+      { x: 1800, y: 150 }
+    ],
+    enemies: [
+      { x: 900, y: 200, type: 'bear' }, // Throws snowballs
+      { x: 1400, y: 200, type: 'penguin' },
+      { x: 1800, y: 150, type: 'bear' }, // High bear
+      { x: 600, y: 500, type: 'ground' } // Ground patrol
+    ]
   }
 ];

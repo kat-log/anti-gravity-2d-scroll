@@ -31,6 +31,11 @@ export default class GameScene extends Phaser.Scene {
     this.load.image('enemy', '/assets/enemy.svg');
     this.load.image('bat', '/assets/bat.svg');
     this.load.image('ghost', '/assets/ghost.svg');
+    this.load.image('penguin', '/assets/penguin.svg');
+    this.load.image('bear', '/assets/bear.svg');
+    this.load.image('snowball', '/assets/snowball.svg');
+    this.load.image('ice_block', '/assets/ice_block.svg');
+    this.load.image('snow_block', '/assets/snow_block.svg');
     this.load.image('star', '/assets/star.svg');
     this.load.image('goal', '/assets/goal.svg');
   }
@@ -79,17 +84,26 @@ export default class GameScene extends Phaser.Scene {
 
     this.levelData.platforms.forEach(p => {
       let platform;
+      let platformKey = 'ground';
+
+      // Determine texture based on type and level theme
+      if (p.type === 'ice') {
+          platformKey = 'ice_block';
+      } else if (this.levelData.id >= 9) {
+          // Winter theme for standard blocks
+          platformKey = 'snow_block';
+      }
 
       if (p.move || p.type === 'crumble') {
           // Use dynamic body for moving/crumbling
-          platform = this.add.tileSprite(p.x, p.y, p.w, p.h, 'ground');
+          platform = this.add.tileSprite(p.x, p.y, p.w, p.h, platformKey);
           this.physics.add.existing(platform);
           platform.body.setAllowGravity(false);
           platform.body.setImmovable(true);
           this.movingPlatforms.add(platform);
       } else {
           // Standard static platform
-          platform = this.add.tileSprite(p.x, p.y, p.w, p.h, 'ground');
+          platform = this.add.tileSprite(p.x, p.y, p.w, p.h, platformKey);
           this.physics.add.existing(platform, true);
           this.platforms.add(platform);
       }
@@ -127,7 +141,16 @@ export default class GameScene extends Phaser.Scene {
           platform.setData('isCrumble', true);
           platform.setTint(0xaaaaaa); // Visual cue
       }
+
+      // Ice Platform Logic
+      if (p.type === 'ice') {
+          platform.setData('isIce', true);
+          // Texture is already set to ice_block
+      }
     });
+
+    // --- Snowballs ---
+    this.snowballs = this.physics.add.group(); // Projectiles
 
     // --- Player ---
     const playerKey = this.characterType === 'ninja' ? 'player2' : 'player';
@@ -191,6 +214,8 @@ export default class GameScene extends Phaser.Scene {
         let key = 'enemy';
         if (type === 'flying') key = 'bat';
         if (type === 'vertical') key = 'ghost';
+        if (type === 'penguin') key = 'penguin';
+        if (type === 'bear') key = 'bear';
 
         const enemy = this.physics.add.sprite(enemyData.x, enemyData.y, key);
         enemy.setCollideWorldBounds(true);
@@ -217,6 +242,39 @@ export default class GameScene extends Phaser.Scene {
                 repeat: -1,
                 ease: 'Sine.easeInOut'
             });
+        } else if (type === 'bear') {
+            enemy.setScale(0.7);
+            enemy.body.setSize(40, 30);
+            enemy.body.setOffset(4, 1);
+            enemy.setGravityY(800);
+            enemy.setImmovable(true); // Bear doesn't move
+            // Throw snowball logic
+            this.time.addEvent({
+                delay: 2500,
+                callback: () => {
+                    if (!this.player || !enemy.active) return;
+                    // Only throw if player is within range
+                    if (Phaser.Math.Distance.Between(enemy.x, enemy.y, this.player.x, this.player.y) < 600) {
+                        const snowball = this.physics.add.sprite(enemy.x, enemy.y, 'snowball');
+                        this.snowballs.add(snowball);
+                        snowball.setScale(0.5);
+                        snowball.setCircle(5); // Tight circle hitbox
+                        snowball.setGravityY(400);
+                        // Throw towards player direction
+                        const direction = this.player.x < enemy.x ? -1 : 1;
+                        snowball.setVelocity(300 * direction, -200);
+                        enemy.setFlipX(direction === 1); // Face player
+                    }
+                },
+                loop: true
+            });
+        } else if (type === 'penguin') {
+             enemy.setScale(0.6);
+             enemy.body.setSize(60, 70); // Increased width
+             enemy.body.setOffset(35, 5); // Shifted further right
+             enemy.setGravityY(800);
+             enemy.setImmovable(false);
+             enemy.setVelocityX(200); // Fast!
         } else {
             enemy.setGravityY(800);
             enemy.setVelocityX(150);
@@ -226,7 +284,7 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // --- Collisions ---
-    this.physics.add.collider(this.player, this.platforms);
+    this.physics.add.collider(this.player, this.platforms, this.checkIce, null, this);
     this.physics.add.collider(this.player, this.movingPlatforms, this.handlePlatformCollision, null, this);
 
     if (ground) {
@@ -236,6 +294,12 @@ export default class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.enemies, this.platforms);
     this.physics.add.collider(this.enemies, this.movingPlatforms);
     this.physics.add.collider(this.player, this.enemies, this.hitEnemy, null, this);
+
+    // Snowball Collisions
+    this.physics.add.collider(this.snowballs, this.platforms, (snowball) => snowball.destroy());
+    this.physics.add.collider(this.snowballs, this.movingPlatforms, (snowball) => snowball.destroy());
+    if (ground) this.physics.add.collider(this.snowballs, ground, (snowball) => snowball.destroy());
+    this.physics.add.collider(this.player, this.snowballs, this.hitEnemy, null, this);
 
     // --- Goal ---
     this.goal = this.physics.add.sprite(this.levelData.goal.x, this.levelData.goal.y, 'goal');
@@ -265,7 +329,18 @@ export default class GameScene extends Phaser.Scene {
     this.time.delayedCall(2000, () => levelText.destroy());
   }
 
+  checkIce(player, platform) {
+      if (platform.getData('isIce')) {
+          player.setData('onIce', true);
+      }
+  }
+
   handlePlatformCollision(player, platform) {
+      // Check Ice
+      if (platform.getData('isIce')) {
+          player.setData('onIce', true);
+      }
+
       // Moving Platform: Move player with it
       if (platform.getData('isMoving')) {
           if (player.body.touching.down && platform.body.touching.up) {
@@ -309,16 +384,47 @@ export default class GameScene extends Phaser.Scene {
 
     const speed = 250;
     const jumpForce = -600;
+    const onIce = this.player.getData('onIce');
 
-    // Horizontal movement
-    if (this.cursors.left.isDown) {
-      this.player.setVelocityX(-speed);
-      this.player.setFlipX(true);
-    } else if (this.cursors.right.isDown) {
-      this.player.setVelocityX(speed);
-      this.player.setFlipX(false);
+    // Reset onIce for next frame (will be set by collision callback if still on ice)
+    this.player.setData('onIce', false);
+
+    if (onIce) {
+        // Ice Physics: Sliding
+        const acceleration = 500;
+        const drag = 10; // Very slippery
+
+        this.player.setDragX(drag);
+
+        if (this.cursors.left.isDown) {
+            this.player.setAccelerationX(-acceleration);
+            this.player.setFlipX(true);
+        } else if (this.cursors.right.isDown) {
+            this.player.setAccelerationX(acceleration);
+            this.player.setFlipX(false);
+        } else {
+            this.player.setAccelerationX(0);
+        }
+
+        // Cap velocity on ice
+        if (this.player.body.velocity.x > speed) this.player.setVelocityX(speed);
+        if (this.player.body.velocity.x < -speed) this.player.setVelocityX(-speed);
+
     } else {
-      this.player.setVelocityX(0);
+        // Normal Physics
+        this.player.setDragX(0);
+        this.player.setAccelerationX(0);
+
+        // Horizontal movement
+        if (this.cursors.left.isDown) {
+          this.player.setVelocityX(-speed);
+          this.player.setFlipX(true);
+        } else if (this.cursors.right.isDown) {
+          this.player.setVelocityX(speed);
+          this.player.setFlipX(false);
+        } else {
+          this.player.setVelocityX(0);
+        }
     }
 
     // Jump State Management
@@ -334,6 +440,8 @@ export default class GameScene extends Phaser.Scene {
 
         if (type === 'vertical') {
             // Handled by tween, just check bounds
+        } else if (type === 'bear') {
+            // Bear is static, handled by timer
         } else if (type === 'flying') {
             // Flying enemies just move back and forth
             if (enemy.x > originX + range) {
@@ -347,6 +455,26 @@ export default class GameScene extends Phaser.Scene {
             // Kickstart if stopped
             if (enemy.body.velocity.x === 0) {
                  enemy.setVelocityX(100);
+            }
+        } else if (type === 'penguin') {
+             // Penguin moves fast
+             if (enemy.x > originX + range) {
+                enemy.setVelocityX(-200);
+                enemy.setFlipX(false);
+            } else if (enemy.x < originX - range) {
+                enemy.setVelocityX(200);
+                enemy.setFlipX(true);
+            }
+            // Wall Collision & Failsafe
+            if (enemy.body.blocked.right) {
+                enemy.setVelocityX(-200);
+                enemy.setFlipX(false);
+            } else if (enemy.body.blocked.left) {
+                enemy.setVelocityX(200);
+                enemy.setFlipX(true);
+            } else if (Math.abs(enemy.body.velocity.x) < 10) {
+                // If stopped but not blocked (e.g. friction?), kickstart
+                enemy.setVelocityX(200);
             }
         } else {
             // Ground enemies
